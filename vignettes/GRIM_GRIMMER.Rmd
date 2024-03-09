@@ -37,30 +37,29 @@ min_decimals <- function(x, digits = 2) {
 
 # GRIM
 
-Note that data is hard coded into the RMarkdown file. It could also be loaded from disk, e.g., from a correctly formatted .csv file (with the headers label, mean, sd, n, and items) to a tibble via readr::read_csv(). Note that the columns mean and sd must be converted to character after load. 
+Note that data is hard coded into the RMarkdown file. It could also be loaded from disk, e.g., from a correctly formatted .csv file (with the headers label, mean, sd, n, and items) to a tibble via `readr::read_csv()`. Note that the columns `"mean"` and `"sd"` must be converted to character and padded with trailing zeros after load.
 
 ```{r}
 
 # enter your data here. Here is some example data
-summary_statistics <- 
-  tibble(
+summary_statistics <- tibble(
     label = c("age group 1", "age group 2", "age group 2"),
-    mean  = c(31.09,         20.70,         31.92),
+    # x is the mean; it can also be a percentage or another fraction
+    x     = c(31.09,         20.70,         31.92),
     sd    = c(6.03,          3.40,          4.83),
     n     = c(23,            23,            29),
-    items = c(1,             1,             1) # number of items in the scale use to measure this variable. For a single item measure like "what is your age?", items = 1
+    # number of items in the scale use to measure this variable. For a single item measure like "what is your age?", items = 1 (the default)
+    items = c(1,             1,             1)
   ) |>
-  mutate(x = as.character(min_decimals(mean)),
-         sd = as.character(min_decimals(sd))) 
+  restore_zeros_df(c(x, sd))
 
 # apply GRIM test
-grim_results <- 
-  summary_statistics |>
-  grim_map() 
+grim_results <- summary_statistics |>
+  grim_map()
 
 # print table
 grim_results |>
-  select(label, mean, sd, n, consistency) |>
+  select(label, x, sd, n, consistency) |>
   knitr::kable() |>
   kableExtra::kable_classic(full_width = FALSE)
 
@@ -75,9 +74,8 @@ grim_results |>
 ```{r}
 
 # apply GRIMMER test using same extracted results
-grimmer_map(data = summary_statistics, 
-            items = summary_statistics$items, 
-            rounding = "up_or_down") |>
+summary_statistics |> 
+  grimmer_map() |> 
   rename(mean = x) |>
   # print table
   knitr::kable() |>
